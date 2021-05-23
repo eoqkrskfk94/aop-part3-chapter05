@@ -7,10 +7,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager
@@ -24,6 +21,9 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
     private lateinit var userDB: DatabaseReference
     private val adapter = CardItemAdapter()
     private val cardItems = mutableListOf<CardItem>()
+    private val manager by lazy {
+        CardStackLayoutManager(this, this)
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +40,8 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
                     return
                 }
 
+                 getUnselectedUsers()
+
             }
             override fun onCancelled(error: DatabaseError) {
             }
@@ -50,9 +52,47 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
 
     }
 
+    private fun getUnselectedUsers() {
+        userDB.addChildEventListener(object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                if(snapshot.child("userId").value != getCurrentUserID()
+                    && snapshot.child("likedBy").child("like").hasChild(getCurrentUserID()).not()
+                    && snapshot.child("likedBy").child("like").hasChild(getCurrentUserID()).not()){
+
+                    val userId = snapshot.child("userId").value.toString()
+                    var name = "undecided"
+                    if(snapshot.child("name").value != null) {
+                        name = snapshot.child("name").value.toString()
+                    }
+
+                    cardItems.add(CardItem(userId, name))
+                    adapter.submitList(cardItems)
+                    adapter.notifyDataSetChanged()
+                }
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                cardItems.find { it.userId == snapshot.key }?.let {
+                    it.name = snapshot.child("name").value.toString()
+                }
+
+                adapter.submitList(cardItems)
+                adapter.notifyDataSetChanged()
+
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
+            override fun onCancelled(error: DatabaseError) {}
+
+        })
+    }
+
     private fun initCardStackView() {
         val stackView = findViewById<CardStackView>(R.id.cardStackView)
-        stackView.layoutManager = CardStackLayoutManager(this, this)
+        stackView.layoutManager = manager
         stackView.adapter = adapter
     }
 
@@ -95,9 +135,41 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
         return auth.currentUser?.uid.orEmpty()
     }
 
+    private fun like() {
+        val card = cardItems[manager.topPosition - 1]
+        cardItems.removeFirst()
+
+        userDB.child(card.userId)
+            .child("LikedBy")
+            .child("like")
+            .child(getCurrentUserID())
+            .setValue(true)
+
+        Toast.makeText(this, "${card.name} like 했습니다", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun disLike() {
+        val card = cardItems[manager.topPosition - 1]
+        cardItems.removeFirst()
+
+        userDB.child(card.userId)
+            .child("LikedBy")
+            .child("disLike")
+            .child(getCurrentUserID())
+            .setValue(false)
+
+        Toast.makeText(this, "${card.name} dislike 했습니다", Toast.LENGTH_SHORT).show()
+    }
+
     override fun onCardDragging(direction: Direction?, ratio: Float) {}
 
-    override fun onCardSwiped(direction: Direction?) {}
+    override fun onCardSwiped(direction: Direction?) {
+        when(direction) {
+            Direction.Left -> disLike()
+            Direction.Right -> like()
+            else -> {}
+        }
+    }
 
     override fun onCardRewound() {}
 
