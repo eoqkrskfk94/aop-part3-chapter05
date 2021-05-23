@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "352723616823",
+    "firebase_url": "https://firstapp-d4bba.firebaseio.com",
+    "project_id": "firstapp-d4bba",
+    "storage_bucket": "firstapp-d4bba.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:352723616823:android:442422cedd7642487b6bb2",
+        "android_client_info": {
+          "package_name": "com.mj.aop_part3_chapter05"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "352723616823-h3inpubdga8vp0h80svv00729vnuvftr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVZAIlmMzGef1lRKHkBeGq5Yo8i8y8THw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "352723616823-h3inpubdga8vp0h80svv00729vnuvftr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
