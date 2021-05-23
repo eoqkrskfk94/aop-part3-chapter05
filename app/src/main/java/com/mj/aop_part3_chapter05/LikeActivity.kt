@@ -1,8 +1,10 @@
 package com.mj.aop_part3_chapter05
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -49,8 +51,28 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
         })
 
         initCardStackView()
+        initSignOutButton()
+        initMatchedListButton()
 
     }
+
+    private fun initSignOutButton() {
+        val signOutButton = findViewById<Button>(R.id.signUpButton)
+        signOutButton.setOnClickListener {
+            auth.signOut()
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
+    }
+
+    private fun initMatchedListButton() {
+        val matchedListButton = findViewById<Button>(R.id.matchListButton)
+        matchedListButton.setOnClickListener {
+            startActivity(Intent(this, MatchedUserActivity::class.java))
+        }
+    }
+
+
 
     private fun getUnselectedUsers() {
         userDB.addChildEventListener(object : ChildEventListener {
@@ -145,6 +167,7 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
             .child(getCurrentUserID())
             .setValue(true)
 
+        saveMatchIfOtherUserLikedMe(card.userId)
         Toast.makeText(this, "${card.name} like 했습니다", Toast.LENGTH_SHORT).show()
     }
 
@@ -159,6 +182,35 @@ class LikeActivity : AppCompatActivity(), CardStackListener {
             .setValue(false)
 
         Toast.makeText(this, "${card.name} dislike 했습니다", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun saveMatchIfOtherUserLikedMe(otherUserId: String) {
+        val otherUserDB = userDB.child(getCurrentUserID()).child("likedBy").child("like").child(otherUserId)
+
+        otherUserDB.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.value == true) {
+                    userDB.child(getCurrentUserID())
+                        .child("likedBy")
+                        .child("match")
+                        .child(otherUserId)
+                        .setValue(true)
+
+                    userDB.child(otherUserId)
+                        .child("likedBy")
+                        .child("match")
+                        .child(getCurrentUserID())
+                        .setValue(true)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+        })
+
+
     }
 
     override fun onCardDragging(direction: Direction?, ratio: Float) {}
